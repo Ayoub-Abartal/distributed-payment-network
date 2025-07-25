@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/distributed-payment-network-main.iml" filepath="$PROJECT_DIR$/.idea/distributed-payment-network-main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/master-service/master-service.iml" filepath="$PROJECT_DIR$/master-service/master-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/payment-network/payment-network.iml" filepath="$PROJECT_DIR$/payment-network/payment-network.iml" />
     </modules>
   </component>
 </project>
