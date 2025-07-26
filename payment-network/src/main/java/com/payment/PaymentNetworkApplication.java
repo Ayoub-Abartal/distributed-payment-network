@@ -8,6 +8,26 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class PaymentNetworkApplication {
     public static void main(String[] args){
-        SpringApplication.run(PaymentNetworkApplication.class);
+        SpringApplication app = new SpringApplication(PaymentNetworkApplication.class);
+        app.setAdditionalProfiles(getActiveProfile(args));
+
+        app.run(args);
     }
+
+    private static String getActiveProfile(String[] args){
+        for(String arg : args ) {
+            if (arg.startsWith("--spring.profiles.active=")) {
+                return arg.substring("--spring.profiles.active=".length());
+            }
+        }
+            // Check environment variable
+            String profileFromEnv = System.getProperty("SPRING_PROFILES_ACTIVE");
+            if (profileFromEnv != null && !profileFromEnv.isEmpty()) {
+                return profileFromEnv;
+            }
+
+            // Default to master
+            return "master";
+        }
 }
+

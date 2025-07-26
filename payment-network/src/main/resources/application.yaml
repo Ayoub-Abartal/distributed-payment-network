@@ -3,8 +3,8 @@ spring:
     name: payment-network
 
   # Active profile (can be overridden with --spring.profiles.active)
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:master}
+  #profiles:
+  #  active: ${SPRING_PROFILES_ACTIVE:master}
 
   jpa:
     hibernate:

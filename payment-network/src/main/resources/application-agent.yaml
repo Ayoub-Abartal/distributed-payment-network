@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:h2:file:./data/agent-${AGENT_ID:default}
+    # Removed the spring.datasource section - it's configured programmatically now
     driver-class-name: org.h2.Driver
     username: sa
     password:
