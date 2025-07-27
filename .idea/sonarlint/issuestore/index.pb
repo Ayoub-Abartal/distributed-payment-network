@@ -3,5 +3,3 @@
 	README.md,8\e\8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d
 ?
 ARCHITECTURE.md,5\3\5353c59756b71d229a2e137daa90d25876df7884
-F
-master-service/pom.xml,d\a\da0ccc936baf810876807dd6f866d756c4b3316d
