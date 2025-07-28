@@ -1,6 +1,7 @@
 package com.payment.agent.registration.service;
 
 import com.payment.agent.registration.dtos.AgentRegistrationRequest;
+import com.payment.master.agent.dtos.AgentRegistrationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,16 +34,19 @@ public class AgentRegistrationServiceImpl implements AgentRegistrationService {
 
             HttpEntity<AgentRegistrationRequest> entity = new HttpEntity<>(request, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(
+            ResponseEntity<AgentRegistrationResponse> response = restTemplate.postForEntity(
                     masterUrl + "/api/master/agents/register",
                     entity,
-                    String.class
+                    AgentRegistrationResponse.class
             );
 
-            String apiKey = response.getBody();
-            log.info("Successfully registered with master. API Key received.");
-
-            return apiKey;
+            AgentRegistrationResponse responseBody = response.getBody();
+            if (responseBody != null && responseBody.getApiKey() != null) {
+                log.info("Successfully registered with master. API Key received.");
+                return responseBody.getApiKey(); // Return just the API key
+            } else {
+                throw new RuntimeException("No API key received from master");
+            }
 
         } catch (Exception e) {
             log.error("Failed to register with master: {}", e.getMessage());
