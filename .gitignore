@@ -48,3 +48,9 @@ Thumbs.db
 
 # Spring Boot
 /spri
+
+# H2 Database
+*.db
+*.trace.db
+*.lock.db
+data/
