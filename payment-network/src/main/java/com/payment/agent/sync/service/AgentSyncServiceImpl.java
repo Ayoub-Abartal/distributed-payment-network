@@ -50,12 +50,12 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         // Get pending transactions
         List<Transaction> pending = transactionRepository.findByStatus(SyncStatus.PENDING_SYNC);
 
+        // Always sync to update last_seen_at, even with no transactions
         if (pending.isEmpty()) {
-            log.debug("No pending transactions to sync");
-            return;
+            log.debug("No pending transactions - sending heartbeat to master");
+        } else {
+            log.info("Pushing {} pending transactions to master", pending.size());
         }
-
-        log.info("Pushing {} pending transactions to master", pending.size());
 
         try {
             // Build sync request
