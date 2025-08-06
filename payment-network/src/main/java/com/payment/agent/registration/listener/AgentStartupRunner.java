@@ -30,12 +30,19 @@ public class AgentStartupRunner {
     public void onApplicationReady() {
         log.info("🚀 Agent {} starting up...", agentId);
 
+        // Generate unique phone number based on agent ID
+        // AGENT1 -> 0600000001, AGENT2 -> 0600000002, etc.
+        String phoneNumber = "060000000" + agentId.replaceAll("[^0-9]", "");
+        if (phoneNumber.length() > 10) {
+            phoneNumber = phoneNumber.substring(0, 10);
+        }
+
         // Build registration request
         AgentRegistrationRequest request = AgentRegistrationRequest.builder()
                 .agentId(agentId)
                 .businessName(agentName)
                 .ownerName("Default Owner")
-                .phoneNumber("0600000000")
+                .phoneNumber(phoneNumber)
                 .location("Morocco")
                 .build();
 
