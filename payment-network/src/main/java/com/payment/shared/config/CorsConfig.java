@@ -19,10 +19,11 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow requests from React dev server
+        // Allow requests from React dev servers
         config.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",  // React dev server
-            "http://localhost:3001"   // Alternative port
+            "http://localhost:3000",  // Master dashboard
+            "http://localhost:3001",  // Agent 1 interface
+            "http://localhost:3002"   // Agent 2 interface
         ));
 
         // Allow all HTTP methods
