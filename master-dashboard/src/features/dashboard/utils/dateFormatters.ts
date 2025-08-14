@@ -10,6 +10,12 @@ export const formatLastSeen = (lastSeenAt: string | null): string => {
 
   const now = new Date();
   const lastSeen = new Date(lastSeenAt);
+
+  // Check if date is valid
+  if (isNaN(lastSeen.getTime())) {
+    return 'Invalid date';
+  }
+
   const seconds = Math.floor((now.getTime() - lastSeen.getTime()) / 1000);
 
   // Just in case we get a future timestamp (shouldn't happen)
@@ -42,7 +48,12 @@ export const formatLastSeen = (lastSeenAt: string | null): string => {
 // Format timestamp for transaction list
 // Shows like "Dec 8, 2:30 PM"
 export const formatTimestamp = (timestamp: string, locale: string = 'en-US'): string => {
+  if (!timestamp) return 'N/A';
+
   const date = new Date(timestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid date';
 
   return date.toLocaleString(locale, {
     month: 'short',
@@ -55,7 +66,12 @@ export const formatTimestamp = (timestamp: string, locale: string = 'en-US'): st
 // Full date with year
 // Shows like "December 8, 2025"
 export const formatFullDate = (timestamp: string, locale: string = 'en-US'): string => {
+  if (!timestamp) return 'N/A';
+
   const date = new Date(timestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid date';
 
   return date.toLocaleDateString(locale, {
     year: 'numeric',
@@ -67,7 +83,12 @@ export const formatFullDate = (timestamp: string, locale: string = 'en-US'): str
 // Just the time part
 // Shows like "2:30 PM"
 export const formatTimeOnly = (timestamp: string, locale: string = 'en-US'): string => {
+  if (!timestamp) return 'N/A';
+
   const date = new Date(timestamp);
+
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid date';
 
   return date.toLocaleTimeString(locale, {
     hour: '2-digit',
@@ -76,7 +97,7 @@ export const formatTimeOnly = (timestamp: string, locale: string = 'en-US'): str
 };
 
 // How many seconds ago was this?
-// Returns 0 if timestamp is null
+// Returns 0 if timestamp is null or invalid
 export const getSecondsAgo = (timestamp: string | null): number => {
   if (!timestamp) {
     return 0;
@@ -84,6 +105,12 @@ export const getSecondsAgo = (timestamp: string | null): number => {
 
   const now = new Date();
   const then = new Date(timestamp);
+
+  // Check if date is valid
+  if (isNaN(then.getTime())) {
+    return 0;
+  }
+
   return Math.floor((now.getTime() - then.getTime()) / 1000);
 };
 
