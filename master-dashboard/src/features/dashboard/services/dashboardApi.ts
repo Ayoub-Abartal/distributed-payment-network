@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Agent, Transaction, DashboardMetrics } from '../types';
+import { Agent, Transaction, DashboardMetrics, Customer } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -19,6 +19,12 @@ export const dashboardApi = {
   // Get dashboard metrics
   getMetrics: async (): Promise<DashboardMetrics> => {
     const response = await axios.get(`${API_BASE_URL}/api/master/dashboard/metrics`);
+    return response.data;
+  },
+
+  // Get all customers
+  getCustomers: async (): Promise<Customer[]> => {
+    const response = await axios.get(`${API_BASE_URL}/api/master/customers`);
     return response.data;
   },
 };

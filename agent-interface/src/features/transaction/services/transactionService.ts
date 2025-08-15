@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Transaction, TransactionRequest, TransactionResponse } from '../types/transaction.types';
+import { Customer } from '../types/customer.types';
 
 // Base URL for agent API - can be configured via env variable
 const API_BASE_URL = process.env.REACT_APP_AGENT_API_URL || 'http://localhost:8081';
@@ -21,4 +22,14 @@ export const createTransaction = async (request: TransactionRequest): Promise<Tr
 export const getLocalTransactions = async (): Promise<Transaction[]> => {
   const response = await api.get<Transaction[]>('/api/agent/transactions');
   return response.data;
+};
+
+// Lookup customer by phone number
+export const getCustomerByPhone = async (phoneNumber: string): Promise<Customer | null> => {
+  try {
+    const response = await api.get<Customer>(`/api/agent/customers/${phoneNumber}`);
+    return response.data;
+  } catch (error) {
+    return null;
+  }
 };

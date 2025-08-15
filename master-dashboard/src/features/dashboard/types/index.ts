@@ -31,3 +31,12 @@ export interface AgentWithStats extends Agent {
   lastSeenFormatted: string;
   connectionStatus: 'ONLINE' | 'WARNING' | 'OFFLINE';
 }
+
+export interface Customer {
+  id: string;
+  phoneNumber: string;
+  name: string;
+  balance: number;
+  createdAt: string;
+  lastTransactionAt?: string;
+}

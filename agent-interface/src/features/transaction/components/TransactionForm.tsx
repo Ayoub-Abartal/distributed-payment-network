@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../../shared/components';
 import { TransactionRequest, TransactionType } from '../types/transaction.types';
+import { Customer } from '../types/customer.types';
+import { getCustomerByPhone } from '../services/transactionService';
+import { formatCurrency } from '../utils/currencyFormatter';
 
 interface TransactionFormProps {
   onSubmit: (request: TransactionRequest) => Promise<void>;
@@ -13,6 +16,26 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('DEPOSIT');
   const [errors, setErrors] = useState<{ phone?: string; amount?: string }>({});
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+
+  // Lookup customer when phone number is valid
+  useEffect(() => {
+    const lookupCustomer = async () => {
+      if (!/^0[67]\d{8}$/.test(customerPhone)) {
+        setCustomer(null);
+        return;
+      }
+
+      setLookingUp(true);
+      const result = await getCustomerByPhone(customerPhone);
+      setCustomer(result);
+      setLookingUp(false);
+    };
+
+    const timer = setTimeout(lookupCustomer, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [customerPhone]);
 
   // Basic validation before submitting
   const validate = (): boolean => {
@@ -52,6 +75,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
       setCustomerPhone('');
       setAmount('');
       setErrors({});
+      setCustomer(null);
     } catch (error) {
       // Error handled by parent
     }
@@ -104,6 +128,39 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
           error={errors.phone}
           disabled={loading}
         />
+
+        {/* Customer Balance Display */}
+        {lookingUp && (
+          <div className="mb-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
+            Looking up customer...
+          </div>
+        )}
+
+        {customer && !lookingUp && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Customer Balance</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(customer.balance)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500">Customer Name</p>
+                <p className="text-sm font-medium text-gray-700">{customer.name}</p>
+              </div>
+            </div>
+            {type === 'WITHDRAWAL' && customer.balance < parseFloat(amount || '0') && (
+              <p className="mt-2 text-sm text-red-600 font-medium">
+                ⚠️ Insufficient balance for this withdrawal
+              </p>
+            )}
+          </div>
+        )}
+
+        {!customer && !lookingUp && customerPhone.length === 10 && /^0[67]\d{8}$/.test(customerPhone) && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+            📝 New customer - Account will be created
+          </div>
+        )}
 
         {/* Amount */}
         <Input

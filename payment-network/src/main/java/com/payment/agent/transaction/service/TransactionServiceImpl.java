@@ -1,15 +1,18 @@
 package com.payment.agent.transaction.service;
 
+import com.payment.agent.customer.service.CustomerService;
 import com.payment.agent.transaction.dtos.TransactionRequest;
 import com.payment.agent.transaction.dtos.TransactionResponse;
 import com.payment.shared.domain.entity.Transaction;
 import com.payment.shared.domain.repositories.TransactionRepository;
 import com.payment.shared.enums.SyncStatus;
+import com.payment.shared.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,14 +26,32 @@ import java.util.stream.Collectors;
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final CustomerService customerService;
 
     @Value("${app.agent.id}")
     private String agentId;
 
     @Override
+    @Transactional
     public TransactionResponse createTransaction(TransactionRequest request) {
         log.info("Creating transaction for customer: {}, type: {}, amount: {}",
                 request.getCustomerPhone(), request.getType(), request.getAmount());
+
+        // Get or create customer
+        customerService.getOrCreateCustomer(request.getCustomerPhone(), "Customer");
+
+        // Validate withdrawal has sufficient balance
+        if (request.getType() == TransactionType.WITHDRAWAL) {
+            if (!customerService.hasBalance(request.getCustomerPhone(), request.getAmount())) {
+                throw new RuntimeException("Insufficient balance for withdrawal");
+            }
+        }
+
+        // Update customer balance
+        Double balanceChange = request.getType() == TransactionType.DEPOSIT
+                ? request.getAmount()
+                : -request.getAmount();
+        customerService.updateBalance(request.getCustomerPhone(), balanceChange);
 
         // Create transaction entity
         Transaction transaction = Transaction.builder()
