@@ -24,6 +24,11 @@ export interface DashboardMetrics {
   activeAgents: number;
   totalTransactions: number;
   totalVolume: number;
+  todayTransactions: number;
+  todayDeposits: number;
+  todayWithdrawals: number;
+  todayVolume: number;
+  totalCustomers: number;
 }
 
 export interface AgentWithStats extends Agent {

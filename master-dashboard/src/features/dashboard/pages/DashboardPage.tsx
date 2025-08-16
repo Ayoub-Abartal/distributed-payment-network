@@ -68,7 +68,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Metrics grid */}
+        {/* Overall Metrics grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricsCard
             title="Total Agents"
@@ -83,10 +83,10 @@ export const DashboardPage: React.FC = () => {
             color="green"
           />
           <MetricsCard
-            title="Total Transactions"
-            value={metrics?.totalTransactions || 0}
-            icon="💳"
-            color="purple"
+            title="Total Customers"
+            value={metrics?.totalCustomers || 0}
+            icon="👥"
+            color="indigo"
           />
           <MetricsCard
             title="Total Volume"
@@ -94,6 +94,37 @@ export const DashboardPage: React.FC = () => {
             icon="💰"
             color="orange"
           />
+        </div>
+
+        {/* Today's Statistics */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">📊 Today's Activity</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricsCard
+              title="Transactions"
+              value={metrics?.todayTransactions || 0}
+              icon="📝"
+              color="blue"
+            />
+            <MetricsCard
+              title="Deposits"
+              value={formatCompactAmount(metrics?.todayDeposits || 0)}
+              icon="⬆️"
+              color="green"
+            />
+            <MetricsCard
+              title="Withdrawals"
+              value={formatCompactAmount(metrics?.todayWithdrawals || 0)}
+              icon="⬇️"
+              color="red"
+            />
+            <MetricsCard
+              title="Total Volume"
+              value={formatCompactAmount(metrics?.todayVolume || 0)}
+              icon="💵"
+              color="purple"
+            />
+          </div>
         </div>
 
         {/* Two column layout for agents and transactions */}

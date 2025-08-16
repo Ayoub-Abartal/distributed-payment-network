@@ -4,13 +4,17 @@ import com.payment.master.dashboard.dtos.DashboardMetricsResponse;
 import com.payment.shared.domain.entity.Agent;
 import com.payment.shared.domain.entity.Transaction;
 import com.payment.shared.domain.repositories.AgentRepository;
+import com.payment.shared.domain.repositories.CustomerRepository;
 import com.payment.shared.domain.repositories.TransactionRepository;
 import com.payment.shared.enums.AgentStatus;
+import com.payment.shared.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -25,6 +29,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final AgentRepository agentRepository;
     private final TransactionRepository transactionRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public List<Agent> getAllAgents() {
@@ -56,11 +61,37 @@ public class DashboardServiceImpl implements DashboardService {
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
+        // Today's transactions (start of today)
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        List<Transaction> todayTxs = transactions.stream()
+                .filter(tx -> tx.getTimestamp().isAfter(startOfToday))
+                .toList();
+
+        // Today's deposits
+        double todayDeposits = todayTxs.stream()
+                .filter(tx -> tx.getType() == TransactionType.DEPOSIT)
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+
+        // Today's withdrawals
+        double todayWithdrawals = todayTxs.stream()
+                .filter(tx -> tx.getType() == TransactionType.WITHDRAWAL)
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+
+        // Total customers
+        long totalCustomers = customerRepository.count();
+
         return DashboardMetricsResponse.builder()
                 .totalAgents(agents.size())
                 .activeAgents((int) activeAgents)
                 .totalTransactions(transactions.size())
                 .totalVolume(totalVolume)
+                .todayTransactions(todayTxs.size())
+                .todayDeposits(todayDeposits)
+                .todayWithdrawals(todayWithdrawals)
+                .todayVolume(todayDeposits + todayWithdrawals)
+                .totalCustomers((int) totalCustomers)
                 .build();
     }
 }

@@ -18,4 +18,13 @@ public class DashboardMetricsResponse {
     private Integer activeAgents;
     private Integer totalTransactions;
     private Double totalVolume;
+
+    // Today's statistics
+    private Integer todayTransactions;
+    private Double todayDeposits;
+    private Double todayWithdrawals;
+    private Double todayVolume;
+
+    // Customer statistics
+    private Integer totalCustomers;
 }
