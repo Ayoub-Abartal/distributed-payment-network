@@ -27,8 +27,6 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
 
   // Fetch all customers on mount
   useEffect(() => {
@@ -73,19 +71,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   }, [customerPhone, selectedCustomer]);
 
   // Handle customer selection from dropdown
-  const handleSelectFromList = (selectedCust: Customer) => {
-    setCustomer(selectedCust);
-    setCustomerPhone(selectedCust.phoneNumber);
-    setShowCustomerDropdown(false);
-    setCustomerSearchTerm('');
-  };
+  const handleCustomerSelect = (phoneNumber: string) => {
+    if (!phoneNumber) {
+      setCustomer(null);
+      setCustomerPhone('');
+      return;
+    }
 
-  // Filter customers based on search
-  const filteredCustomers = allCustomers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-      c.phoneNumber.includes(customerSearchTerm)
-  );
+    const selectedCust = allCustomers.find((c) => c.phoneNumber === phoneNumber);
+    if (selectedCust) {
+      setCustomer(selectedCust);
+      setCustomerPhone(selectedCust.phoneNumber);
+    }
+  };
 
   // Basic validation before submitting
   const validate = (): boolean => {
@@ -183,58 +181,25 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
           </div>
         </div>
 
-        {/* Quick Customer Select */}
-        {!selectedCustomer && !customer && allCustomers.length > 0 && (
-          <div className="mb-4 relative">
+        {/* Customer Select Dropdown */}
+        {!selectedCustomer && allCustomers.length > 0 && (
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Quick Select Customer (Optional)
+              Select Customer (Optional)
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search customers by name or phone..."
-                value={customerSearchTerm}
-                onChange={(e) => {
-                  setCustomerSearchTerm(e.target.value);
-                  setShowCustomerDropdown(true);
-                }}
-                onFocus={() => setShowCustomerDropdown(true)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-              {/* Dropdown */}
-              {showCustomerDropdown && customerSearchTerm && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {filteredCustomers.length > 0 ? (
-                    filteredCustomers.slice(0, 5).map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleSelectFromList(c)}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-gray-900">{c.name}</p>
-                            <p className="text-sm text-gray-500">{c.phoneNumber}</p>
-                          </div>
-                          <p className="text-sm font-medium text-blue-600">
-                            {formatCurrency(c.balance)}
-                          </p>
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500">
-                      No customers found
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Or enter phone number manually below
-            </p>
+            <select
+              value={customer?.phoneNumber || ''}
+              onChange={(e) => handleCustomerSelect(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            >
+              <option value="">-- New Customer (Enter phone below) --</option>
+              {allCustomers.map((c) => (
+                <option key={c.id} value={c.phoneNumber}>
+                  {c.name} - {c.phoneNumber} - {formatCurrency(c.balance)}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
