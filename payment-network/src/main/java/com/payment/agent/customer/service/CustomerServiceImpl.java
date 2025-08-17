@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -54,6 +55,33 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.save(customer);
 
         log.info("Updated balance for {}: {} (change: {})", phoneNumber, customer.getBalance(), amount);
+    }
+
+    @Override
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public CustomerResponse createCustomer(String phoneNumber, String name, Double initialBalance) {
+        // Check if customer already exists
+        if (customerRepository.findByPhoneNumber(phoneNumber).isPresent()) {
+            throw new RuntimeException("Customer already exists with phone: " + phoneNumber);
+        }
+
+        log.info("Creating new customer: {} with initial balance: {}", phoneNumber, initialBalance);
+        Customer newCustomer = Customer.builder()
+                .phoneNumber(phoneNumber)
+                .name(name)
+                .balance(initialBalance != null ? initialBalance : 0.0)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Customer saved = customerRepository.save(newCustomer);
+        return mapToResponse(saved);
     }
 
     @Override

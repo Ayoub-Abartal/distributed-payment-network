@@ -8,10 +8,17 @@ import { formatCurrency } from '../utils/currencyFormatter';
 interface TransactionFormProps {
   onSubmit: (request: TransactionRequest) => Promise<void>;
   loading: boolean;
+  selectedCustomer?: Customer | null;
+  onClearCustomer?: () => void;
 }
 
 // Form to create deposit or withdrawal transactions
-export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, loading }) => {
+export const TransactionForm: React.FC<TransactionFormProps> = ({
+  onSubmit,
+  loading,
+  selectedCustomer,
+  onClearCustomer,
+}) => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('DEPOSIT');
@@ -19,8 +26,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
 
+  // Set customer from selected customer prop
+  useEffect(() => {
+    if (selectedCustomer) {
+      setCustomerPhone(selectedCustomer.phoneNumber);
+      setCustomer(selectedCustomer);
+    }
+  }, [selectedCustomer]);
+
   // Lookup customer when phone number is valid
   useEffect(() => {
+    // Skip lookup if we have a selected customer
+    if (selectedCustomer) return;
+
     const lookupCustomer = async () => {
       if (!/^0[67]\d{8}$/.test(customerPhone)) {
         setCustomer(null);
@@ -35,7 +53,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
 
     const timer = setTimeout(lookupCustomer, 500); // Debounce
     return () => clearTimeout(timer);
-  }, [customerPhone]);
+  }, [customerPhone, selectedCustomer]);
 
   // Basic validation before submitting
   const validate = (): boolean => {
@@ -76,6 +94,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
       setAmount('');
       setErrors({});
       setCustomer(null);
+      if (onClearCustomer) onClearCustomer();
     } catch (error) {
       // Error handled by parent
     }
@@ -83,7 +102,22 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
 
   return (
     <Card>
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">New Transaction</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">New Transaction</h2>
+        {selectedCustomer && onClearCustomer && (
+          <button
+            type="button"
+            onClick={() => {
+              setCustomerPhone('');
+              setCustomer(null);
+              onClearCustomer();
+            }}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear Selection
+          </button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit}>
         {/* Transaction Type Selection */}
@@ -126,8 +160,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, load
           placeholder="0612345678"
           required
           error={errors.phone}
-          disabled={loading}
+          disabled={loading || !!selectedCustomer}
         />
+
+        {/* Selected Customer Indicator */}
+        {selectedCustomer && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+            ✅ Customer selected from list: {selectedCustomer.name}
+          </div>
+        )}
 
         {/* Customer Balance Display */}
         {lookingUp && (

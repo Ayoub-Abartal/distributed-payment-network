@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { TransactionForm } from '../features/transaction/components/TransactionForm';
 import { TransactionList } from '../features/transaction/components/TransactionList';
 import { useTransactions } from '../features/transaction/hooks/useTransactions';
+import { CustomersPage } from './CustomersPage';
+import { Customer } from '../features/customer/types/customer.types';
+
+type TabType = 'transactions' | 'customers';
 
 export const AgentPage: React.FC = () => {
   const { transactions, loading, error, submitTransaction, refreshTransactions } = useTransactions(5000);
   const [agentName, setAgentName] = useState('Agent');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('transactions');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   // Get agent name from env or URL
   useEffect(() => {
@@ -27,6 +33,12 @@ export const AgentPage: React.FC = () => {
     }
   };
 
+  // Handle customer selection from customer list
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setActiveTab('transactions');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -43,6 +55,32 @@ export const AgentPage: React.FC = () => {
             >
               🔄 Refresh
             </button>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="mt-6 border-b border-gray-200">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('transactions')}
+                className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'transactions'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                💸 Transactions
+              </button>
+              <button
+                onClick={() => setActiveTab('customers')}
+                className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'customers'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                👥 Customers
+              </button>
+            </nav>
           </div>
         </div>
       </header>
@@ -63,18 +101,27 @@ export const AgentPage: React.FC = () => {
           </div>
         )}
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Transaction Form */}
-          <div>
-            <TransactionForm onSubmit={handleSubmit} loading={loading} />
-          </div>
+        {/* Tab Content */}
+        {activeTab === 'transactions' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Transaction Form */}
+            <div>
+              <TransactionForm
+                onSubmit={handleSubmit}
+                loading={loading}
+                selectedCustomer={selectedCustomer}
+                onClearCustomer={() => setSelectedCustomer(null)}
+              />
+            </div>
 
-          {/* Transaction List */}
-          <div>
-            <TransactionList transactions={transactions} />
+            {/* Transaction List */}
+            <div>
+              <TransactionList transactions={transactions} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <CustomersPage onSelectCustomer={handleSelectCustomer} />
+        )}
       </main>
     </div>
   );
