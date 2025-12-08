@@ -6,13 +6,14 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { MetricsCard } from '../components/MetricsCard';
 import { AgentList } from '../components/AgentList';
 import { TransactionList } from '../components/TransactionList';
+import { CustomerList } from '../components/CustomerList';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
 import { ErrorMessage } from '../components/shared/ErrorMessage';
 import { formatCompactAmount } from '../utils/currencyFormatters';
 
 export const DashboardPage: React.FC = () => {
   // Fetch dashboard data (polls every 5 seconds)
-  const { agents, transactions, metrics, loading, error, refetch } = useDashboardData(5000);
+  const { agents, transactions, customers, metrics, loading, error, refetch } = useDashboardData(5000);
 
   // Show loading state on first load
   if (loading && !metrics) {
@@ -127,18 +128,16 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Two column layout for agents and transactions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Three column layout for agents, customers, and transactions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Agent list */}
           <AgentList agents={agents} />
 
+          {/* Customer list */}
+          <CustomerList customers={customers} />
+
           {/* Transaction list */}
           <TransactionList transactions={transactions} limit={10} />
-        </div>
-
-        {/* Full width transaction list */}
-        <div className="mb-8">
-          <TransactionList transactions={transactions} limit={20} />
         </div>
       </main>
 
