@@ -1,7 +1,7 @@
 // Main transaction list component
 // Shows recent transactions from all agents in a table
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Transaction } from '../types';
 import { sortTransactionsByDate } from '../utils/transactionHelpers';
 import { TransactionTableHeader } from './TransactionTableHeader';
@@ -18,8 +18,20 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   limit = 20,
   onTransactionClick,
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'ALL' | 'DEPOSIT' | 'WITHDRAWAL'>('ALL');
+
+  // Filter transactions
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesSearch =
+      tx.customerPhone.includes(searchTerm) ||
+      tx.agentId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'ALL' || tx.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
   // Sort and limit the transactions
-  const displayedTransactions = sortTransactionsByDate(transactions).slice(0, limit);
+  const displayedTransactions = sortTransactionsByDate(filteredTransactions).slice(0, limit);
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -31,6 +43,26 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         <p className="text-sm text-gray-500 mt-1">
           Showing {displayedTransactions.length} of {transactions.length} transactions
         </p>
+
+        {/* Filters */}
+        <div className="mt-3 flex gap-3">
+          <input
+            type="text"
+            placeholder="Search by phone or agent..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as 'ALL' | 'DEPOSIT' | 'WITHDRAWAL')}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ALL">All Types</option>
+            <option value="DEPOSIT">Deposits</option>
+            <option value="WITHDRAWAL">Withdrawals</option>
+          </select>
+        </div>
       </div>
 
       {/* Transaction table */}

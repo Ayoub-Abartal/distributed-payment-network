@@ -61,10 +61,10 @@ public class DashboardServiceImpl implements DashboardService {
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
-        // Today's transactions (start of today)
+        // Today's transactions (from start of today onwards)
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         List<Transaction> todayTxs = transactions.stream()
-                .filter(tx -> tx.getTimestamp().isAfter(startOfToday))
+                .filter(tx -> !tx.getTimestamp().isBefore(startOfToday))
                 .toList();
 
         // Today's deposits
