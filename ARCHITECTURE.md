@@ -495,11 +495,11 @@ Dashboard (React)
 
 ### Single App with Profiles vs. Microservices
 
-✅ **Production Pattern:** Used by Kafka, Elasticsearch, Redis clusters
 ✅ **Code Reuse:** Shared domain logic, entities, utilities
 ✅ **Deployment Flexibility:** Same JAR, different configs
-✅ **Faster Development:** 2-3 days vs 4-5 days for separate services
+✅ **Development Speed:** Faster to build and test
 ✅ **Operational Simplicity:** Single build pipeline
+✅ **Easy Scaling:** Run multiple instances with different profiles
 
 ### Feature-Based vs. Layered
 
@@ -540,7 +540,6 @@ agent/
 
 ### 3. Startup Registration
 - Uses `@EventListener(ApplicationReadyEvent.class)`
-- Different from `ApplicationRunner` (company pattern)
 - Fires when app is fully ready, not just started
 
 ### 4. Unique Phone Numbers
@@ -606,15 +605,6 @@ Both master and agent expose:
 - Component tests (React Testing Library)
 - Utility function tests
 - API integration tests
-
-## Differences from Company Implementation
-
-**Intentionally Different (to avoid IP concerns):**
-- ✅ Used `@EventListener` vs `ApplicationRunner`
-- ✅ UUID API keys vs custom scheme
-- ✅ master/agent terminology vs central/site
-- ✅ H2 database vs MySQL
-- ✅ Programmatic DB config vs YAML-based
 
 ## Future Enhancements
 
