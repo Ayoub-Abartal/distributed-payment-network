@@ -1,0 +1,33 @@
+# Maven build output
+target/
+!target/*.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# H2 database files (will use PostgreSQL in Docker)
+data/
+*.db
+*.mv.db
+*.trace.db
+
+# DevTools
+.mvn/
+mvnw
+mvnw.cmd
