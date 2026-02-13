@@ -38,12 +38,32 @@ services:
       - payment-network
     depends_on:
       payment-hub:
+        condition: service_healthy #  waits until health check passes (Hub is ready)
+
+  payment-spoke-2:
+    image: payment-network:latest
+    container_name: payment-spoke-2
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: agent
+      APP_AGENT_ID: AGENT2
+      APP_AGENT_NAME: "Rabat Shop"
+      APP_AGENT_LOCATION: "Rabat"
+      MASTER_URL: http://payment-hub:8080     
+    volumes:
+      - payment-spoke-2-data:/app/data
+    networks:
+      - payment-network
+    depends_on:
+      payment-hub:
         condition: service_healthy
 
 # Named volumes for data persistence
 volumes:
   payment-hub-data:
   payment-spoke-1-data:
+  payment-spoke-2-data:
 
 # Network for container communication
 networks:
