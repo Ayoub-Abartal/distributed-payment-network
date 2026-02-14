@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Hub (Master) Service
+  payment-hub:
+    image: payment-network:latest
+    container_name: payment-hub
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: master
+    volumes:
+      - payment-hub-data:/app/data
+    networks:
+      - payment-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Spoke (Agent) Service
+  payment-spoke-1:
+    image: payment-network:latest
+    container_name: payment-spoke-1
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: agent
+      APP_AGENT_ID: AGENT1
+      APP_AGENT_NAME: "Casa Shop"
+      APP_AGENT_LOCATION: "Casablanca"
+      MASTER_URL: http://payment-hub:8080
+    volumes:
+      - payment-spoke-1-data:/app/data
+    networks:
+      - payment-network
+    depends_on:
+      payment-hub:
+        condition: service_healthy #  waits until health check passes (Hub is ready)
+
+  payment-spoke-2:
+    image: payment-network:latest
+    container_name: payment-spoke-2
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: agent
+      APP_AGENT_ID: AGENT2
+      APP_AGENT_NAME: "Rabat Shop"
+      APP_AGENT_LOCATION: "Rabat"
+      MASTER_URL: http://payment-hub:8080     
+    volumes:
+      - payment-spoke-2-data:/app/data
+    networks:
+      - payment-network
+    depends_on:
+      payment-hub:
+        condition: service_healthy
+
+# Named volumes for data persistence
+volumes:
+  payment-hub-data:
+  payment-spoke-1-data:
+  payment-spoke-2-data:
+
+# Network for container communication
+networks:
+  payment-network:
+    driver: bridge
