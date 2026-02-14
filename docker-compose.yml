@@ -59,6 +59,32 @@ services:
       payment-hub:
         condition: service_healthy
 
+  # Master Dashboard (React)
+  master-dashboard:
+    build:
+      context: ./master-dashboard
+      dockerfile: Dockerfile
+    container_name: master-dashboard
+    ports:
+      - "3000:80"
+    networks:
+      - payment-network
+    depends_on:
+      - payment-hub
+
+  # Agent Interface (React)
+  agent-interface:
+    build:
+      context: ./agent-interface
+      dockerfile: Dockerfile
+    container_name: agent-interface
+    ports:
+      - "3001:80"
+    networks:
+      - payment-network
+    depends_on:
+      - payment-spoke-1
+
 # Named volumes for data persistence
 volumes:
   payment-hub-data:
