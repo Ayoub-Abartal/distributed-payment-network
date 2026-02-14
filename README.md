@@ -122,11 +122,34 @@ This project simulates a distributed payment network where multiple agents can p
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Java 17 or higher
-- Node.js 16+ and npm
-- Maven 3.6+
+- Docker and Docker Compose
+- (Optional) Java 17, Node.js 16+, Maven 3.6+ for local development
 
-### Running the Master Node
+### Option 1: Run with Docker Compose (Recommended)
+
+**Start the entire system (Hub + 2 Spokes):**
+
+```bash
+docker-compose up
+```
+
+This will start:
+- **Hub (Master):** http://localhost:8080
+- **Spoke 1:** http://localhost:8081
+- **Spoke 2:** http://localhost:8082
+- **Master Dashboard:** http://localhost:3000
+- **Agent Interface:** http://localhost:3001
+
+**Stop the system:**
+```bash
+docker-compose down
+```
+
+---
+
+### Option 2: Run Manually (Without Docker)
+
+#### Backend - Master Node
 
 ```bash
 cd payment-network
@@ -135,7 +158,7 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--app.role=master
 
 The master node will start on `http://localhost:8080`
 
-### Running an Agent Node
+#### Backend - Agent Node
 
 ```bash
 cd payment-network
@@ -144,7 +167,7 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--app.role=agent,--server.port=8
 
 The agent node will start on `http://localhost:8081`
 
-### Running the Master Dashboard (React)
+#### Frontend - Master Dashboard
 
 ```bash
 cd master-dashboard
@@ -154,7 +177,7 @@ npm start
 
 Dashboard will open at `http://localhost:3000`
 
-### Running the Agent Interface (React)
+#### Frontend - Agent Interface
 
 ```bash
 cd agent-interface
