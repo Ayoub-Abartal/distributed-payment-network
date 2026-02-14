@@ -311,7 +311,7 @@ features/
 
 This is a personal project I built to demonstrate distributed systems concepts I've worked with in production. The Hub-Spoke architecture is inspired by a real system I maintained for 176 sites, where I learned about eventual consistency, conflict resolution, and real-time synchronization challenges.
 
-I'm continuously improving this project - currently working on integrating Kafka for event-driven architecture and Docker for containerization.
+I'm continuously improving this project - currently working on integrating Kafka for event-driven architecture.
 
 ## 📝 License
 
