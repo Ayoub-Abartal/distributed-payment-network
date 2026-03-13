@@ -2,16 +2,28 @@ spring:
   application:
     name: payment-network
 
-  # Active profile (can be overridden with --spring.profiles.active)
-  #profiles:
-  #  active: ${SPRING_PROFILES_ACTIVE:master}
-
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./data/payment}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
-     
+  
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP:payment-network-group}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*" # dev only 
+      auto-offset-reset: earliest
+
   jpa:
     hibernate:
       ddl-auto: update
