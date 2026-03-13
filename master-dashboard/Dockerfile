@@ -5,7 +5,7 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 # Copy package files for layer caching (dependencies don't change often)
-COPY package*.json .
+COPY package*.jsonlet .
 
 # Install dependencies
 RUN npm install 

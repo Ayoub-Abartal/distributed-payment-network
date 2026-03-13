@@ -1,12 +1,6 @@
 server:
   port: ${AGENT_PORT:8081}
 
-spring:
-  datasource:
-    # Removed the spring.datasource section - it's configured programmatically now
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
 
 app:
   role: agent

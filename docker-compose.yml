@@ -1,14 +1,100 @@
-version: '3.8'
-
 services:
+
+  # Postgres for hub 
+  postgres-hub:
+    image: postgres:15-alpine
+    container_name: postgres-hub
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: hub_db
+      POSTGRES_USER: hub_user
+      POSTGRES_PASSWORD: hub_pass
+    volumes:
+      - postgres-hub-data:/var/lib/postgresql/data
+    networks:
+     - payment-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub_user -d hub_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ########################################################
+
+  # db config for Spoke 1
+  postgres-spoke-1:
+    image: postgres:15-alpine
+    container_name: postgres-spoke-1
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: spoke1_db
+      POSTGRES_USER: spoke1_user
+      POSTGRES_PASSWORD: spoke1_pass
+    volumes:
+      - postgres-spoke-1-data:/var/lib/postgresql/data
+    networks:
+     - payment-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spoke1_user -d spoke1_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ########################################################
+
+  # db config for Spoke 2
+  postgres-spoke-2:
+    image: postgres:15-alpine
+    container_name: postgres-spoke-2
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: spoke2_db
+      POSTGRES_USER: spoke2_user
+      POSTGRES_PASSWORD: spoke2_pass
+    volumes:
+      - postgres-spoke-2-data:/var/lib/postgresql/data
+    networks:
+     - payment-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spoke2_user -d spoke2_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+   
+  ########################################################
+
+  # Postgres Admin Page
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - payment-network
+  
+  ########################################################
+
   # Hub (Master) Service
   payment-hub:
+    build:
+      context: ./payment-network
+      dockerfile: Dockerfile
     image: payment-network:latest
     container_name: payment-hub
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: master
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-hub:5432/hub_db
+      SPRING_DATASOURCE_USERNAME: hub_user
+      SPRING_DATASOURCE_PASSWORD: hub_pass
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
     volumes:
       - payment-hub-data:/app/data
     networks:
@@ -19,14 +105,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    depends_on:
+      postgres-hub:
+        condition: service_healthy
+
+  ########################################################
 
   # Spoke (Agent) Service
   payment-spoke-1:
+    build:
+      context: ./payment-network
+      dockerfile: Dockerfile
     image: payment-network:latest
     container_name: payment-spoke-1
     ports:
       - "8081:8080"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-spoke-1:5432/spoke1_db
+      SPRING_DATASOURCE_USERNAME: spoke1_user
+      SPRING_DATASOURCE_PASSWORD: spoke1_pass
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_PROFILES_ACTIVE: agent
       APP_AGENT_ID: AGENT1
       APP_AGENT_NAME: "Casa Shop"
@@ -37,15 +135,24 @@ services:
     networks:
       - payment-network
     depends_on:
+      postgres-spoke-1:
+        condition: service_healthy
       payment-hub:
         condition: service_healthy #  waits until health check passes (Hub is ready)
 
+  ########################################################
+
+  # Spoke 2 (Agent) Service
   payment-spoke-2:
     image: payment-network:latest
     container_name: payment-spoke-2
     ports:
       - "8082:8080"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-spoke-2:5432/spoke2_db
+      SPRING_DATASOURCE_USERNAME: spoke2_user
+      SPRING_DATASOURCE_PASSWORD: spoke2_pass
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_PROFILES_ACTIVE: agent
       APP_AGENT_ID: AGENT2
       APP_AGENT_NAME: "Rabat Shop"
@@ -56,8 +163,12 @@ services:
     networks:
       - payment-network
     depends_on:
+      postgres-spoke-2:
+        condition: service_healthy
       payment-hub:
         condition: service_healthy
+
+  ########################################################
 
   # Master Dashboard (React)
   master-dashboard:
@@ -72,6 +183,8 @@ services:
     depends_on:
       - payment-hub
 
+  ########################################################
+
   # Agent Interface (React)
   agent-interface:
     build:
@@ -85,11 +198,17 @@ services:
     depends_on:
       - payment-spoke-1
 
+  ########################################################
+
 # Named volumes for data persistence
 volumes:
+  postgres-hub-data:
+  postgres-spoke-1-data:
+  postgres-spoke-2-data:
   payment-hub-data:
   payment-spoke-1-data:
   payment-spoke-2-data:
+
 
 # Network for container communication
 networks:

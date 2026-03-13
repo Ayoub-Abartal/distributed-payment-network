@@ -6,6 +6,12 @@ spring:
   #profiles:
   #  active: ${SPRING_PROFILES_ACTIVE:master}
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./data/payment}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
+     
   jpa:
     hibernate:
       ddl-auto: update
