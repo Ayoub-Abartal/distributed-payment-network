@@ -10,7 +10,7 @@ public interface SyncEvent {
     String getEventType();
     
     /**
-     * Get the unique identifier of the entity(e.g., transaction ID, ....)
+     * Get the unique identifier of the entity(e.g., transaction ID, Customer_ID , ....)
      * @return String
      */
     String getEntityId();
