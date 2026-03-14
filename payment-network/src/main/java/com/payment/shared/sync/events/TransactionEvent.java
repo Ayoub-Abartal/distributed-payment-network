@@ -17,7 +17,7 @@ public class TransactionEvent implements SyncEvent{
     private String id;
     private String agentId;
     private String customerPhone;
-    private TransactionType transactionType;
+    private TransactionType type;
     private Double amount;
     private LocalDateTime timestamp;
     private String eventType;

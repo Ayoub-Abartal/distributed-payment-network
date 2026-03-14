@@ -17,7 +17,7 @@ public class CustomerEvent implements SyncEvent {
     private String name;
     private Double balance;
     private LocalDateTime createdAt;
-    private LocalDateTime lastTranscationAt;
+    private LocalDateTime lastTransactionAt;
     private LocalDateTime timestamp;
     private String agentId;
     private String eventType;
@@ -29,7 +29,7 @@ public class CustomerEvent implements SyncEvent {
 
     @Override
     public String getEntityId(){
-        return phoneNumber;
+        return id;
     }
 
     @Override
