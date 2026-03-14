@@ -5,11 +5,14 @@ import com.payment.shared.domain.entity.Customer;
 import com.payment.shared.domain.repositories.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -17,7 +20,9 @@ import java.util.List;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
-
+    
+    @Value("${app.agent.id}")
+    private String agentId;
     @Override
     @Transactional
     public CustomerResponse getOrCreateCustomer(String phoneNumber, String name) {
@@ -25,6 +30,8 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseGet(() -> {
                     log.info("Creating new customer with phone: {}", phoneNumber);
                     Customer newCustomer = Customer.builder()
+                            .id(UUID.randomUUID().toString())
+                            .agentId(agentId)
                             .phoneNumber(phoneNumber)
                             .name(name)
                             .balance(0.0)
@@ -74,6 +81,8 @@ public class CustomerServiceImpl implements CustomerService {
 
         log.info("Creating new customer: {} with initial balance: {}", phoneNumber, initialBalance);
         Customer newCustomer = Customer.builder()
+                .id(UUID.randomUUID().toString())
+                .agentId(agentId)
                 .phoneNumber(phoneNumber)
                 .name(name)
                 .balance(initialBalance != null ? initialBalance : 0.0)
@@ -94,6 +103,7 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerResponse mapToResponse(Customer customer) {
         return CustomerResponse.builder()
                 .id(customer.getId())
+                .agentId(customer.getAgentId())
                 .phoneNumber(customer.getPhoneNumber())
                 .name(customer.getName())
                 .balance(customer.getBalance())

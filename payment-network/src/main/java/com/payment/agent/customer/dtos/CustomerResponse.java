@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class CustomerResponse {
 
     private String id;
+    private String agentId;
     private String phoneNumber;
     private String name;
     private Double balance;

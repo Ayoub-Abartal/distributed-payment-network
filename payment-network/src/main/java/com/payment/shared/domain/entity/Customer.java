@@ -17,8 +17,10 @@ import java.time.LocalDateTime;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(nullable = false)
+    private String agentId;
 
     @Column(nullable = false, unique = true)
     private String phoneNumber;
