@@ -39,6 +39,7 @@ export interface AgentWithStats extends Agent {
 
 export interface Customer {
   id: string;
+  agentId: string;
   phoneNumber: string;
   name: string;
   balance: number;

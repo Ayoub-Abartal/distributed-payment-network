@@ -3,6 +3,8 @@ package com.payment.agent.registration.listener;
 import com.payment.agent.registration.dtos.AgentRegistrationRequest;
 import com.payment.agent.registration.service.AgentRegistrationService;
 import com.payment.agent.sync.service.AgentSyncServiceImpl;
+import com.payment.agent.sync.config.ApiKeyHolder;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ public class AgentStartupRunner {
 
     private final AgentRegistrationService registrationService;
     private final AgentSyncServiceImpl agentSyncService; // Changed to implementation to call setApiKey
+    private final ApiKeyHolder apiKeyHolder;
 
     @Value("${app.agent.id}")
     private String agentId;
@@ -51,8 +54,9 @@ public class AgentStartupRunner {
             log.info("✅ Agent registered successfully. API Key stored.");
 
             // Store API key for sync operations
-            agentSyncService.setApiKey(apiKey);
-            log.info("✅ API Key configured for sync operations");
+            //agentSyncService.setApiKey(apiKey);
+            apiKeyHolder.setApiKey(apiKey);
+            log.info("✅ API Key confiqgured for sync operations");
 
         } catch (Exception e) {
             log.error("❌ Failed to register with master: {}", e.getMessage());

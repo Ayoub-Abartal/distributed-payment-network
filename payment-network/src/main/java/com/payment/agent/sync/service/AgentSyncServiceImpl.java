@@ -7,8 +7,12 @@ import com.payment.shared.domain.entity.Transaction;
 import com.payment.shared.domain.repositories.CustomerRepository;
 import com.payment.shared.domain.repositories.TransactionRepository;
 import com.payment.shared.enums.SyncStatus;
-import lombok.RequiredArgsConstructor;
+import com.payment.agent.sync.config.ApiKeyHolder;
+
+
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
@@ -22,13 +26,15 @@ import java.util.List;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.role", havingValue = "agent")
 public class AgentSyncServiceImpl implements AgentSyncService {
 
     private final TransactionRepository transactionRepository;
     private final CustomerRepository customerRepository;
+
     private final RestTemplate restTemplate;
+
+    private final ApiKeyHolder apiKeyHolder;
 
     @Value("${app.agent.id}")
     private String agentId;
@@ -36,16 +42,22 @@ public class AgentSyncServiceImpl implements AgentSyncService {
     @Value("${app.master.url}")
     private String masterUrl;
 
-    private String apiKey; // Stored after registration
+    public AgentSyncServiceImpl(
+        TransactionRepository transactionRepository,
+        CustomerRepository customerRepository,
+        @Qualifier("syncRestTemplate") RestTemplate restTemplate,
+        ApiKeyHolder apiKeyHolder
+    ){
+        this.transactionRepository = transactionRepository;
+        this.customerRepository = customerRepository;
+        this.restTemplate = restTemplate;
+        this.apiKeyHolder = apiKeyHolder;
 
-    // TODO: This should be set from AgentStartupRunner after registration
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
     }
 
     @Override
     public void pushToMaster() {
-        if (apiKey == null) {
+        if (apiKeyHolder.getApiKey() == null) {
             log.warn("No API key available. Cannot sync. Agent may not be registered.");
             return;
         }
@@ -74,7 +86,6 @@ public class AgentSyncServiceImpl implements AgentSyncService {
             // Set headers with API key
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-API-Key", apiKey);
 
             HttpEntity<SyncRequest> entity = new HttpEntity<>(syncRequest, headers);
 

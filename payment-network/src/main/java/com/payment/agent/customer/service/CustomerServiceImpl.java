@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +18,14 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(name="app.role", havingValue = "agent")
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     
     @Value("${app.agent.id}")
     private String agentId;
+
     @Override
     @Transactional
     public CustomerResponse getOrCreateCustomer(String phoneNumber, String name) {

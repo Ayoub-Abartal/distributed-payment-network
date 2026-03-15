@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.role", havingValue = "agent")
 public class AgentRegistrationServiceImpl implements AgentRegistrationService {
-
+    
     private final RestTemplate restTemplate;
 
     @Value("${app.master.url}")
