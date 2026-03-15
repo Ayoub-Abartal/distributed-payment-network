@@ -65,31 +65,51 @@ This project simulates a distributed payment network where multiple agents can p
 ```
 ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
 │   Agent Node 1  │         │   Master Node   │         │   Agent Node 2  │
-│                 │         │                 │         │                 │
+│                 │         │   (Hub)         │         │                 │
 │  - Transactions │◄───────►│  - Aggregation  │◄───────►│  - Transactions │
 │  - Customers    │  Sync   │  - Monitoring   │  Sync   │  - Customers    │
-│  - Local DB     │  30s    │  - Dashboard    │  30s    │  - Local DB     │
+│  - PostgreSQL   │  Event  │  - PostgreSQL   │  Event  │  - PostgreSQL   │
+│                 │  Driven │  - Kafka        │  Driven │                 │
 └─────────────────┘         └─────────────────┘         └─────────────────┘
+         │                           │                           │
+         └───────────────────────────┴───────────────────────────┘
+                                     │
+                              ┌──────▼──────┐
+                              │    Kafka    │
+                              │  (Event Bus)│
+                              └─────────────┘
 ```
 
 ### Key Components
 
 **Spring Profiles:**
-- `master` - Runs the master node with aggregation and monitoring
-- `agent` - Runs agent nodes for transaction processing
+- `master` - Runs the master node (Hub) with aggregation and monitoring
+- `agent` - Runs agent nodes (Spokes) for transaction processing
 
-**Synchronization:**
-- Agents push pending transactions and all customers to master every 30 seconds
-- Master receives, validates, and stores data with conflict resolution
-- Last-write-wins strategy for handling concurrent updates
-- Heartbeat mechanism for agent health monitoring
+**Database Architecture:**
+- Each node has its own PostgreSQL database (true distributed architecture)
+- UUID-based entity IDs preserved across all nodes for referential integrity
+- No JPA relationships - entities linked by business keys (phoneNumber)
+- Agent ID embedded in all entities for ownership tracking
 
-**Data Flow:**
-1. Agent processes transaction locally
+**Authentication:**
+- API key-based authentication using RestTemplate interceptor pattern
+- Automatic header injection for all sync requests
+- Designed for easy migration to JWT in the future
+
+**Event-Driven Synchronization (In Progress):**
+- Strategy Pattern implementation for flexible sync mechanisms
+- Event DTOs (TransactionEvent, CustomerEvent) separate from JPA entities
+- Entity-specific strategies (HTTP, Kafka, Hybrid) for different sync approaches
+- Kafka infrastructure ready for event streaming
+
+**Current Sync Flow:**
+1. Agent processes transaction locally with generated UUID
 2. Transaction marked as PENDING_SYNC
-3. Background scheduler pushes to master
+3. Background scheduler pushes to master via HTTP (transitioning to Kafka)
 4. Master validates and stores with SYNCED status
 5. Master aggregates data for dashboard
+6. Conflict resolution using last-write-wins strategy
 
 ## 🛠️ Tech Stack
 
@@ -98,7 +118,8 @@ This project simulates a distributed payment network where multiple agents can p
 - **Spring Boot 3.x** - Enterprise-grade framework
 - **Spring Data JPA** - Database abstraction with projections
 - **Spring Profiles** - Environment-based configuration (master/agent)
-- **H2 Database** - In-memory database (production-ready for PostgreSQL/MySQL)
+- **PostgreSQL 15** - Production-grade relational database (separate instance per node)
+- **Apache Kafka** - Event streaming platform for distributed messaging
 - **Lombok** - Reduces boilerplate code
 - **Maven** - Dependency management and build tool
 
@@ -113,7 +134,10 @@ This project simulates a distributed payment network where multiple agents can p
 ### Key Patterns & Practices
 - **Repository Pattern** - Clean data access layer
 - **Service Layer** - Business logic separation
-- **DTO Mapping** - API data transfer objects
+- **Strategy Pattern** - Pluggable sync mechanisms (HTTP, Kafka, Hybrid)
+- **DTO Mapping** - API data transfer objects and event DTOs
+- **Interceptor Pattern** - Automatic API key injection for authentication
+- **ID Preservation** - UUID generation at source for distributed referential integrity
 - **Custom Hooks** - React state and side effects management
 - **Polling Strategy** - Auto-refresh for real-time updates
 - **Debouncing** - Optimized user input handling
@@ -127,13 +151,20 @@ This project simulates a distributed payment network where multiple agents can p
 
 ### Option 1: Run with Docker Compose (Recommended)
 
-**Start the entire system (Hub + 2 Spokes):**
+**Start the entire system (Hub + 2 Spokes + Infrastructure):**
 
 ```bash
 docker-compose up
 ```
 
 This will start:
+- **Zookeeper:** localhost:2181 (Kafka coordination)
+- **Kafka Broker:** localhost:9092 (Event streaming)
+- **Kafka UI:** http://localhost:8090 (Kafka management interface)
+- **PostgreSQL Hub:** localhost:5432 (Master database)
+- **PostgreSQL Spoke 1:** localhost:5433 (Agent 1 database)
+- **PostgreSQL Spoke 2:** localhost:5434 (Agent 2 database)
+- **pgAdmin:** http://localhost:5050 (Database management - admin@admin.com/admin)
 - **Hub (Master):** http://localhost:8080
 - **Spoke 1:** http://localhost:8081
 - **Spoke 2:** http://localhost:8082
@@ -143,6 +174,11 @@ This will start:
 **Stop the system:**
 ```bash
 docker-compose down
+```
+
+**Stop and remove all data (fresh start):**
+```bash
+docker-compose down -v
 ```
 
 ---
@@ -298,7 +334,7 @@ features/
 
 ## 🚧 Future Enhancements
 
-- PostgreSQL/MySQL for production deployment
+- Complete Kafka event-driven sync implementation
 - JWT authentication for web interfaces
 - WebSocket for real-time updates
 - Transaction rollback mechanism
@@ -306,12 +342,13 @@ features/
 - Advanced reporting and analytics
 - Agent performance metrics
 - Audit logging
+- Property-based testing for distributed consistency
 
 ## 📝 About This Project
 
-This is a personal project I built to demonstrate distributed systems concepts I've worked with in production. The Hub-Spoke architecture is inspired by a real system I maintained for 176 sites, where I learned about eventual consistency, conflict resolution, and real-time synchronization challenges.
+This is a personal project built to demonstrate distributed systems concepts used in production environments. The Hub-Spoke architecture is inspired by a real system maintained for 176 sites, implementing eventual consistency, conflict resolution, and real-time synchronization.
 
-I'm continuously improving this project - currently working on integrating Kafka for event-driven architecture.
+Currently implementing event-driven architecture with Kafka using the Strategy Pattern for flexible sync mechanisms (HTTP, Kafka, Hybrid).
 
 ## 📝 License
 
