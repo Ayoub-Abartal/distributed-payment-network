@@ -1,27 +1,28 @@
 package com.payment.agent.sync.service;
 
-import com.payment.master.sync.dtos.SyncRequest;
-import com.payment.master.sync.dtos.SyncResponse;
 import com.payment.shared.domain.entity.Customer;
 import com.payment.shared.domain.entity.Transaction;
 import com.payment.shared.domain.repositories.CustomerRepository;
 import com.payment.shared.domain.repositories.TransactionRepository;
 import com.payment.shared.enums.SyncStatus;
+import com.payment.shared.sync.events.CustomerEvent;
+import com.payment.shared.sync.events.TransactionEvent;
+import com.payment.shared.sync.strategy.common.EntityType;
+import com.payment.shared.sync.strategy.common.SyncStrategyType;
 import com.payment.agent.sync.config.ApiKeyHolder;
-
+import com.payment.agent.sync.mapper.CustomerEventMapper;
+import com.payment.agent.sync.mapper.TransactionEventMapper;
+import com.payment.agent.sync.orchestrator.AgentSyncEntityConfig;
+import com.payment.agent.sync.orchestrator.AgentSyncOrchestrator;
+import com.payment.agent.sync.strategy.factory.AgentSyncStrategyFactory;
 
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
+import org.springframework.stereotype.Service;
+
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,29 +30,42 @@ import java.util.List;
 @ConditionalOnProperty(name = "app.role", havingValue = "agent")
 public class AgentSyncServiceImpl implements AgentSyncService {
 
+    private final AgentSyncStrategyFactory syncStrategyFactory;
+    private final AgentSyncOrchestrator syncOrchestrator;
+
     private final TransactionRepository transactionRepository;
     private final CustomerRepository customerRepository;
 
-    private final RestTemplate restTemplate;
-
     private final ApiKeyHolder apiKeyHolder;
-
-    @Value("${app.agent.id}")
-    private String agentId;
-
-    @Value("${app.master.url}")
-    private String masterUrl;
 
     public AgentSyncServiceImpl(
         TransactionRepository transactionRepository,
         CustomerRepository customerRepository,
-        @Qualifier("syncRestTemplate") RestTemplate restTemplate,
-        ApiKeyHolder apiKeyHolder
+        ApiKeyHolder apiKeyHolder,
+        AgentSyncStrategyFactory syncStrategyFactory
     ){
+        this.apiKeyHolder = apiKeyHolder;
+
         this.transactionRepository = transactionRepository;
         this.customerRepository = customerRepository;
-        this.restTemplate = restTemplate;
-        this.apiKeyHolder = apiKeyHolder;
+        
+        this.syncStrategyFactory = syncStrategyFactory;
+
+        List<AgentSyncEntityConfig<?>> configs = new ArrayList<>();
+
+        // build transaction Config 
+        AgentSyncEntityConfig<TransactionEvent> transactionSyncConfig = this.setupTransactionConfig();
+
+        // build Customer config 
+        AgentSyncEntityConfig<CustomerEvent> customerSyncConfig = this.setupCustomerConfig();
+    
+        // Add configs
+
+        configs.add(transactionSyncConfig);
+        configs.add(customerSyncConfig);
+
+        // create orchestrator 
+        this.syncOrchestrator = new AgentSyncOrchestrator(configs);
 
     }
 
@@ -61,58 +75,96 @@ public class AgentSyncServiceImpl implements AgentSyncService {
             log.warn("No API key available. Cannot sync. Agent may not be registered.");
             return;
         }
-
-        // Get pending transactions
-        List<Transaction> pending = transactionRepository.findByStatus(SyncStatus.PENDING_SYNC);
-
-        // Get all customers (always sync latest customer data)
-        List<Customer> customers = customerRepository.findAll();
-
-        // Always sync to update last_seen_at, even with no transactions
-        if (pending.isEmpty() && customers.isEmpty()) {
-            log.debug("No data to sync - sending heartbeat to master");
-        } else {
-            log.info("Pushing {} transactions and {} customers to master", pending.size(), customers.size());
-        }
-
-        try {
-            // Build sync request
-            SyncRequest syncRequest = SyncRequest.builder()
-                    .agentId(agentId)
-                    .transactions(pending)
-                    .customers(customers)
-                    .build();
-
-            // Set headers with API key
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<SyncRequest> entity = new HttpEntity<>(syncRequest, headers);
-
-            // Send to master
-            ResponseEntity<SyncResponse> response = restTemplate.postForEntity(
-                    masterUrl + "/api/master/sync/receive",
-                    entity,
-                    SyncResponse.class
-            );
-
-            SyncResponse syncResponse = response.getBody();
-
-            if (syncResponse != null && "SUCCESS".equals(syncResponse.getStatus())
-                    || "PARTIAL_SUCCESS".equals(syncResponse.getStatus())) {
-
-                // Mark transactions as synced
-                pending.forEach(tx -> tx.setStatus(SyncStatus.SYNCED));
-                transactionRepository.saveAll(pending);
-
-                log.info("✅ Successfully synced {} transactions. Response: {}",
-                        syncResponse.getSynced(), syncResponse.getMessage());
-            } else {
-                log.error("❌ Sync failed: {}", syncResponse != null ? syncResponse.getMessage() : "Unknown error");
-            }
-
-        } catch (Exception e) {
-            log.error("❌ Failed to sync transactions: {}", e.getMessage());
-        }
+        syncOrchestrator.syncAll();
     }
+
+    // Returns Customer Sync Config  
+    private AgentSyncEntityConfig<CustomerEvent> setupCustomerConfig(){
+              
+        return AgentSyncEntityConfig.<CustomerEvent>builder()
+                .entityName("Customer")
+                .order(1)
+                .strategy(syncStrategyFactory.getStrategy(EntityType.CUSTOMER, SyncStrategyType.HTTP))
+                .eventSupplier(
+                () -> {
+                    List<Customer> customers = customerRepository.findAll();
+                    
+                    List<CustomerEvent> customerEvents = customers.stream()
+                        .map(CustomerEventMapper::toEvent)
+                        .toList();
+
+                        return customerEvents;
+                }
+                )
+                .resultHandler(
+                    (syncResponse) -> {
+                        if(syncResponse.isSuccess()){
+                            log.info(" Successfully synced {} Customers. Response: {}",
+                                            syncResponse.getSyncedCount(), 
+                                            syncResponse.getMessage()
+                                        );
+                        }else{
+                            log.error("Failed Syncing  {} Customers. Response: {} ",
+                                    syncResponse.getFailedCount(),
+                                    syncResponse.getMessage()
+                            );
+                        }
+                    }
+                )
+                .build();
+    }
+
+    
+    // Returns Transaction Sync Config 
+    private AgentSyncEntityConfig<TransactionEvent> setupTransactionConfig(){
+        
+        return AgentSyncEntityConfig.<TransactionEvent>builder()
+                .entityName("Transaction")
+                .order(2)
+                .strategy(syncStrategyFactory.getStrategy(EntityType.TRANSACTION, SyncStrategyType.HTTP))
+                .eventSupplier(
+                () ->{
+                    
+                    // Get Pending Transactions
+                    List<Transaction> pendingTransactions = transactionRepository.findByStatus(SyncStatus.PENDING_SYNC);
+
+                    // Convert to events using mapper 
+                    List<TransactionEvent> events = pendingTransactions
+                                .stream()
+                                .map(TransactionEventMapper::toEvent)
+                                .toList();
+
+                    return events;
+                } 
+                )
+                .resultHandler(
+                    (syncResponse) -> {
+                        if(syncResponse.isSuccess()){
+
+                            // Get Synced Ids
+                            List<String> syncedIds = syncResponse.getSyncedIds();
+                            
+                            // find those transactions 
+                            List<Transaction> syncedTransactions = transactionRepository.findAllById(syncedIds);
+
+                            // Update Status with sync
+                            syncedTransactions.forEach(tx -> tx.setStatus(SyncStatus.SYNCED));
+                                            transactionRepository.saveAll(syncedTransactions);
+                            
+                            log.info(" Successfully synced {} transactions. Response: {}",
+                                        syncResponse.getSyncedCount(), 
+                                        syncResponse.getMessage()
+                                    );
+
+                        }else{
+                            log.error("Failed Syncing {} transactions . Response: {}",
+                                    syncResponse.getFailedCount(),
+                                    syncResponse.getMessage()
+                            );
+                        }
+                    }
+                )
+                .build();
+    }
+
 }
