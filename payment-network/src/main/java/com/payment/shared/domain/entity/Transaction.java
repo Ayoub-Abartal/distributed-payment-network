@@ -38,6 +38,8 @@ public class Transaction {
     @Column(nullable = false)
     private SyncStatus status;  // PENDING_SYNC, SYNCED, FAILED
 
+    // To-do: separate the timestamp into createdAt and updatedAt , 
+    
     @Column(nullable = false)
     private LocalDateTime timestamp;  // For conflict resolution
 

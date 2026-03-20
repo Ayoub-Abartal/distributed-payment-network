@@ -19,5 +19,7 @@ public class SyncResult{
     private String message;
     private SyncStrategyType usedStrategy;
     private List<String> errors;
+    private List<String> syncedIds;
+    private List<String> failedIds;
 
 }
