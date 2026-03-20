@@ -1,5 +1,7 @@
 package com.payment.master.sync.dtos;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,4 +17,6 @@ public class SyncResponse {
     private int conflicts;        // Number of conflicts detected
     private String status;        // SUCCESS, PARTIAL_SUCCESS, FAILED
     private String message;       // Human-readable message
+    private List<String> syncedIds;
+    private List<String> failedIds;
 }
