@@ -1,4 +1,4 @@
-package com.payment.agent.sync.mapper;
+package com.payment.shared.mapper;
 
 import com.payment.shared.domain.entity.Transaction;
 import com.payment.shared.sync.events.TransactionEvent;
@@ -16,4 +16,16 @@ public class TransactionEventMapper {
             .eventType("TRANSACTION_CREATED")
             .build();
     } 
+
+       
+    public static Transaction toEntity(TransactionEvent transactionEvent){
+        return Transaction.builder()
+            .id(transactionEvent.getId())
+            .agentId(transactionEvent.getAgentId())
+            .type(transactionEvent.getType())
+            .customerPhone(transactionEvent.getCustomerPhone())
+            .amount(transactionEvent.getAmount())
+            .timestamp(transactionEvent.getTimestamp())
+            .build();
+    }
 }

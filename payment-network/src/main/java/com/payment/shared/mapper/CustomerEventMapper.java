@@ -1,4 +1,4 @@
-package com.payment.agent.sync.mapper;
+package com.payment.shared.mapper;
 
 import com.payment.shared.domain.entity.Customer;
 
@@ -19,5 +19,17 @@ public class CustomerEventMapper {
             .eventType("CUSTOMER_CREATED")
             .build();
     } 
+
+    public static Customer toEntity(CustomerEvent customerEvent){
+        return Customer.builder()
+            .id(customerEvent.getId())
+            .agentId(customerEvent.getAgentId())
+            .phoneNumber(customerEvent.getPhoneNumber())
+            .name(customerEvent.getName())
+            .balance(customerEvent.getBalance())
+            .createdAt(customerEvent.getCreatedAt())
+            .lastTransactionAt(customerEvent.getLastTransactionAt())
+            .build();
+    }
 }
 
