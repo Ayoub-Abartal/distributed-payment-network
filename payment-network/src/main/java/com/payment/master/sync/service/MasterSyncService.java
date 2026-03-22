@@ -1,7 +1,7 @@
 package com.payment.master.sync.service;
 
-import com.payment.master.sync.dtos.SyncRequest;
-import com.payment.master.sync.dtos.SyncResponse;
+import com.payment.shared.sync.dtos.SyncRequest;
+import com.payment.shared.sync.dtos.SyncResponse;
 
 public interface MasterSyncService {
 
@@ -11,5 +11,6 @@ public interface MasterSyncService {
      * @param apiKey API key for authentication
      * @return Sync response with status
      */
-    SyncResponse receiveTransactions(SyncRequest request, String apiKey);
+    @Deprecated
+    SyncResponse receiveTransactions(SyncRequest request, String apiKey);  
 }

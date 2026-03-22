@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.payment.master.sync.dtos.SyncResponse;
-import com.payment.master.sync.dtos.TransactionSyncRequest;
+import com.payment.shared.sync.dtos.SyncResponse;
+import com.payment.shared.sync.dtos.TransactionSyncRequest;
 import com.payment.shared.sync.events.TransactionEvent;
 import com.payment.shared.sync.strategy.common.SyncResult;
 import com.payment.shared.sync.strategy.common.SyncStrategyType;

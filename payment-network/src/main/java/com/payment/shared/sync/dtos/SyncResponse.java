@@ -1,4 +1,4 @@
-package com.payment.master.sync.dtos;
+package com.payment.shared.sync.dtos;
 
 import java.util.List;
 

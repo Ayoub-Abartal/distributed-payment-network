@@ -1,7 +1,5 @@
 package com.payment.master.sync.service;
 
-import com.payment.master.sync.dtos.SyncRequest;
-import com.payment.master.sync.dtos.SyncResponse;
 import com.payment.shared.domain.entity.Agent;
 import com.payment.shared.domain.entity.Customer;
 import com.payment.shared.domain.entity.Transaction;
@@ -9,6 +7,9 @@ import com.payment.shared.domain.repositories.AgentRepository;
 import com.payment.shared.domain.repositories.CustomerRepository;
 import com.payment.shared.domain.repositories.TransactionRepository;
 import com.payment.shared.enums.SyncStatus;
+import com.payment.shared.sync.dtos.SyncRequest;
+import com.payment.shared.sync.dtos.SyncResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

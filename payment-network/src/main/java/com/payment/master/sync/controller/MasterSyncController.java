@@ -1,8 +1,9 @@
 package com.payment.master.sync.controller;
 
-import com.payment.master.sync.dtos.SyncRequest;
-import com.payment.master.sync.dtos.SyncResponse;
 import com.payment.master.sync.service.MasterSyncService;
+import com.payment.shared.sync.dtos.SyncRequest;
+import com.payment.shared.sync.dtos.SyncResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
