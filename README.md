@@ -2,7 +2,7 @@
 
 A full-stack fintech application demonstrating a distributed agent-master payment system with real-time synchronization and conflict resolution.
 
-## 📋 Table of Contents
+## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
 - [Screenshots](#screenshots)
@@ -11,11 +11,11 @@ A full-stack fintech application demonstrating a distributed agent-master paymen
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 
-## 🎯 Overview
+## Overview
 
 This project simulates a distributed payment network where multiple agents can process transactions independently, with automatic synchronization to a central master node. It demonstrates real-world fintech challenges including eventual consistency, conflict resolution, and real-time data synchronization.
 
-## ✨ Features
+## Features
 
 ### Master Dashboard
 - **Real-time monitoring** of all agents, transactions, and system metrics
@@ -59,7 +59,7 @@ This project simulates a distributed payment network where multiple agents can p
 ![Agent Customers](screenshoots/agent-customers.png)
 *Create and manage customers with search functionality and balance overview*
 
-## 🏗️ Architecture
+## Architecture
 
 ### System Design
 ```
@@ -97,21 +97,26 @@ This project simulates a distributed payment network where multiple agents can p
 - Automatic header injection for all sync requests
 - Designed for easy migration to JWT in the future
 
-**Event-Driven Synchronization (In Progress):**
-- Strategy Pattern implementation for flexible sync mechanisms
+**HTTP Synchronization (Implemented):**
+- Orchestrator-Receiver pattern for clean separation of concerns
+- Agent side: `AgentSyncOrchestrator` coordinates multi-entity sync
+- Master side: `MasterSyncReceiver` routes events to entity-specific handlers
 - Event DTOs (TransactionEvent, CustomerEvent) separate from JPA entities
-- Entity-specific strategies (HTTP, Kafka, Hybrid) for different sync approaches
-- Kafka infrastructure ready for event streaming
+- Auto-discovery of handlers via Spring for easy scalability
+- Strategy Pattern ready for future Kafka/Hybrid implementations
 
 **Current Sync Flow:**
 1. Agent processes transaction locally with generated UUID
 2. Transaction marked as PENDING_SYNC
-3. Background scheduler pushes to master via HTTP (transitioning to Kafka)
-4. Master validates and stores with SYNCED status
-5. Master aggregates data for dashboard
-6. Conflict resolution using last-write-wins strategy
+3. Background scheduler triggers orchestrator every 30 seconds
+4. Orchestrator syncs Customer first, then Transaction (dependency order)
+5. HTTP strategy sends events to master with API key authentication
+6. Master receiver routes to handlers, converts events to entities
+7. Entities saved with SYNCED status
+8. Agent updates local status based on response
+9. Master aggregates data for dashboard
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Java 17** - Modern Java features and performance
@@ -134,16 +139,18 @@ This project simulates a distributed payment network where multiple agents can p
 ### Key Patterns & Practices
 - **Repository Pattern** - Clean data access layer
 - **Service Layer** - Business logic separation
-- **Strategy Pattern** - Pluggable sync mechanisms (HTTP, Kafka, Hybrid)
+- **Orchestrator Pattern** - Coordinates multi-entity sync on agent side
+- **Receiver Pattern** - Routes events to handlers on master side
+- **Strategy Pattern** - Pluggable sync mechanisms (HTTP implemented, Kafka/Hybrid ready)
+- **Handler Pattern** - Entity-specific processing with auto-discovery
 - **DTO Mapping** - API data transfer objects and event DTOs
 - **Interceptor Pattern** - Automatic API key injection for authentication
 - **ID Preservation** - UUID generation at source for distributed referential integrity
 - **Custom Hooks** - React state and side effects management
 - **Polling Strategy** - Auto-refresh for real-time updates
 - **Debouncing** - Optimized user input handling
-- **Conflict Resolution** - Last-write-wins for distributed consistency
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Docker and Docker Compose
@@ -223,7 +230,7 @@ REACT_APP_AGENT_API_URL=http://localhost:8081 npm start
 
 Agent interface will open at `http://localhost:3001`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 distributed-payment-network/
@@ -231,17 +238,29 @@ distributed-payment-network/
 │   └── src/main/java/com/payment/
 │       ├── agent/                # Agent-specific controllers & services
 │       │   ├── customer/         # Customer management
-│       │   ├── sync/             # Sync scheduler
+│       │   ├── sync/             # Sync orchestrator & strategies
+│       │   │   ├── orchestrator/ # AgentSyncOrchestrator
+│       │   │   ├── strategy/     # HTTP/Kafka/Hybrid strategies
+│       │   │   └── service/      # Sync scheduler
 │       │   └── transaction/      # Transaction processing
 │       ├── master/               # Master-specific controllers & services
 │       │   ├── agent/            # Agent registration
 │       │   ├── customer/         # Customer aggregation
 │       │   ├── dashboard/        # Dashboard metrics
-│       │   └── sync/             # Sync receiver
+│       │   └── sync/             # Sync receiver & handlers
+│       │       ├── receiver/     # MasterSyncReceiver
+│       │       ├── handler/      # Entity-specific handlers
+│       │       ├── config/       # Auto-discovery config
+│       │       └── controller/   # REST endpoints
 │       └── shared/               # Shared entities & repositories
 │           ├── domain/
 │           │   ├── entity/       # JPA entities
 │           │   └── repositories/ # Spring Data repositories
+│           ├── sync/             # Sync contracts & DTOs
+│           │   ├── events/       # Event DTOs
+│           │   ├── dtos/         # Request/Response DTOs
+│           │   ├── strategy/     # Strategy interfaces
+│           │   └── mapper/       # Entity-Event mappers
 │           └── enums/            # Shared enumerations
 │
 ├── master-dashboard/             # React master dashboard
@@ -271,46 +290,7 @@ distributed-payment-network/
         └── pages/                # Page components
 ```
 
-## 🔑 Key Implementation Details
 
-### Backend Architecture
-
-**Spring Profiles for Multi-Mode:**
-```java
-@ConditionalOnProperty(name = "app.role", havingValue = "master")
-public class MasterSyncController { ... }
-
-@ConditionalOnProperty(name = "app.role", havingValue = "agent")
-public class AgentSyncScheduler { ... }
-```
-
-**DTO Projections for Optimized Queries:**
-```java
-public interface CustomerProjection {
-    String getPhoneNumber();
-    String getName();
-    Double getBalance();
-}
-```
-
-**Transaction Management:**
-```java
-@Transactional
-public SyncResponse receiveTransactions(SyncRequest request) {
-    // Atomic transaction processing with conflict resolution
-}
-```
-
-### Frontend Architecture
-
-**Custom Hooks for Data Management:**
-```typescript
-export const useTransactions = (refreshInterval: number) => {
-  // Automatic polling with state management
-  // Error handling and loading states
-  // Transaction submission logic
-}
-```
 
 **Feature-based Module Structure:**
 ```
@@ -324,7 +304,7 @@ features/
     └── ...
 ```
 
-## 🔐 Security Considerations
+## Security Considerations
 
 - API key authentication for agent-master communication
 - Agent ID validation on sync requests
@@ -332,9 +312,11 @@ features/
 - Balance validation before withdrawals
 - Transaction isolation for data consistency
 
-## 🚧 Future Enhancements
+## Future Enhancements
 
-- Complete Kafka event-driven sync implementation
+- Kafka event-driven sync (infrastructure ready, strategy pattern in place)
+- Hybrid sync mode (Kafka with HTTP fallback)
+- Parallel sync for independent entities
 - JWT authentication for web interfaces
 - WebSocket for real-time updates
 - Transaction rollback mechanism
@@ -342,13 +324,15 @@ features/
 - Advanced reporting and analytics
 - Agent performance metrics
 - Audit logging
+- Retry logic with exponential backoff
+- Circuit breaker pattern
 - Property-based testing for distributed consistency
 
 ## 📝 About This Project
 
 This is a personal project built to demonstrate distributed systems concepts used in production environments. The Hub-Spoke architecture is inspired by a real system maintained for 176 sites, implementing eventual consistency, conflict resolution, and real-time synchronization.
 
-Currently implementing event-driven architecture with Kafka using the Strategy Pattern for flexible sync mechanisms (HTTP, Kafka, Hybrid).
+Currently implements HTTP-based synchronization using orchestrator-receiver pattern. The architecture is designed with Strategy Pattern to support future Kafka and Hybrid sync modes.
 
 ## 📝 License
 
