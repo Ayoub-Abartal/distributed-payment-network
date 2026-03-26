@@ -1,7 +1,6 @@
 server:
   port: ${AGENT_PORT:8081}
 
-
 app:
   role: agent
   agent:
@@ -12,3 +11,9 @@ app:
   sync:
     enabled: true
     interval: 30000  # 30 seconds
+
+spring:
+  kafka:
+    producer:
+      acks: all     # Wait for all replicas (safety)
+      retires: 3

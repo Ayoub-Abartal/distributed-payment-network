@@ -1,8 +1,15 @@
 server:
   port: 8080
 
-
 app:
   role: master
   sync:
     enabled: false
+
+spring:
+  kafka:
+    consumer:
+      group-id: master-sync-group  # Specific group for master 
+      enable-auto-commit: false    # manual commits 
+    listener:
+      ack-mode: MANUAL

@@ -84,7 +84,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         return AgentSyncEntityConfig.<CustomerEvent>builder()
                 .entityName("Customer")
                 .order(1)
-                .strategy(syncStrategyFactory.getStrategy(EntityType.CUSTOMER, SyncStrategyType.HTTP))
+                .strategy(syncStrategyFactory.getStrategy(EntityType.CUSTOMER, SyncStrategyType.KAFKA))
                 .eventSupplier(
                 () -> {
                     List<Customer> customers = customerRepository.findAll();
@@ -121,7 +121,7 @@ public class AgentSyncServiceImpl implements AgentSyncService {
         return AgentSyncEntityConfig.<TransactionEvent>builder()
                 .entityName("Transaction")
                 .order(2)
-                .strategy(syncStrategyFactory.getStrategy(EntityType.TRANSACTION, SyncStrategyType.HTTP))
+                .strategy(syncStrategyFactory.getStrategy(EntityType.TRANSACTION, SyncStrategyType.KAFKA))
                 .eventSupplier(
                 () ->{
                     
